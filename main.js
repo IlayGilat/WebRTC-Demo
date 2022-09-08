@@ -9,7 +9,6 @@ let channel;
 let localStream;
 let remoteStream;
 let peerConnection;
-let imageCapture;
 const servers = {
   iceServers: [
     {
@@ -34,17 +33,30 @@ let init = async () => {
 
   document.getElementById("user-1").srcObject = localStream;
   document.getElementById("user-1").onclick = grabFrame;
-
-  imageCapture = new ImageCapture(localStream.getVideoTracks()[0]);
 };
 
-let grabFrame = async () => {
-  imageCapture.takePhoto().then(async (blob) => {
-    let reader = new FileReader();
-    reader.readAsDataURL(blob);
-    reader.onload = () => {
-      console.log(reader.result);
-    };
+let grabFrame = () => {
+  let imageCap = new ImageCapture(remoteStream.getVideoTracks()[0]);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  imageCap.grabFrame().then((imageBitmap) => {
+    console.log("Grabbed frame: ", imageBitmap);
+    canvas.width = imageBitmap.width;
+    canvas.height = imageBitmap.height;
+    context.drawImage(imageBitmap, 0, 0);
+    const data = context.getImageData(0, 0, 50, 50).data;
+    const rgbaArr = [];
+    for (let i = 0; i < data.length; i += 4) {
+      const rgba = {
+        r: data[i],
+        g: data[i + 1],
+        b: data[i + 2],
+        a: data[i + 3],
+      };
+      rgbaArr.push(rgba);
+    }
+    console.log(rgbaArr);
   });
 };
 let handleMessageFromPeer = async (message, MemberId) => {
@@ -136,4 +148,5 @@ let addAnswer = async (answer) => {
     peerConnection.setRemoteDescription(answer);
   }
 };
+
 init();
