@@ -9,6 +9,9 @@ let channel;
 let localStream;
 let remoteStream;
 let peerConnection;
+
+let inputBuffer;
+let outputBuffer;
 const servers = {
   iceServers: [
     {
@@ -27,7 +30,9 @@ let init = async () => {
 
   client.on("MessageFromPeer", handleMessageFromPeer);
   localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
+    video: {
+      frameRate: { exact: 20 },
+    },
     audio: false,
   });
 
@@ -116,6 +121,12 @@ let createPeerConnection = async (MemberId) => {
       );
     }
   };
+
+  /*
+  setInterval(() => {
+    grabFrame();
+  }, 50);
+  */
 };
 
 let createOffer = async (MemberId) => {
@@ -147,6 +158,10 @@ let addAnswer = async (answer) => {
   if (!peerConnection.currentRemoteDescription) {
     peerConnection.setRemoteDescription(answer);
   }
+};
+
+let sendSten = async () => {
+  alert(document.getElementById("myTextarea").value);
 };
 
 init();
