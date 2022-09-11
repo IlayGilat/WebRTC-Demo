@@ -1,4 +1,5 @@
-let APP_ID = "914f7af2b652488db4a7c6998460136a";
+const APP_ID = "914f7af2b652488db4a7c6998460136a";
+const FRAME_RATE = 20;
 
 let token = null;
 let uid = String(Math.floor(Math.random() * 10000));
@@ -8,6 +9,7 @@ let channel;
 
 let localStream;
 let remoteStream;
+let stenStream;
 let peerConnection;
 
 let inputBuffer;
@@ -38,6 +40,9 @@ let init = async () => {
 
   document.getElementById("user-1").srcObject = localStream;
   document.getElementById("user-1").onclick = grabFrame;
+
+  document.getElementById("edited-stream").srcObject = canvas2.captureStream();
+  stenStream = canvas2.captureStream();
 };
 
 let grabFrame = () => {
@@ -98,8 +103,8 @@ let createPeerConnection = async (MemberId) => {
     document.getElementById("user-1").srcObject = localStream;
   }
 
-  localStream.getTracks().forEach((track) => {
-    peerConnection.addTrack(track, localStream);
+  stenStream.getTracks().forEach((track) => {
+    peerConnection.addTrack(track, stenStream);
   });
 
   peerConnection.ontrack = (event) => {
@@ -163,5 +168,52 @@ let addAnswer = async (answer) => {
 let sendSten = async () => {
   alert(document.getElementById("myTextarea").value);
 };
+const canvas1 = document.createElement("canvas");
+const canvas2 = document.createElement("canvas");
+let inputCtx = canvas1.getContext("2d");
+let outputCtx = canvas2.getContext("2d");
+let CameraStreamToBmpStream = () => {
+  /* if (!localStream || !peerConnection) return;
+  let imageCap = new ImageCapture(localStream.getVideoTracks()[0]);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  imageCap.grabFrame().then((imageBitmap) => {
+    canvas.width = imageBitmap.width;
+    canvas.height = imageBitmap.height;
+    context.drawImage(imageBitmap, 0, 0);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] -= 1;
+    }
+    context.putImageData(imageData, 0, 0);
+
+    stenStream = canvas.captureStream(20);
+    document.getElementById("edited-stream").srcObject = stenStream;
+    requestAnimationFrame(CameraStreamToBmpStream);
+  
+  });
+  */
+  const width = 300;
+  const height = 225;
+
+  inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
+  outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
+  const pixelData = inputCtx.getImageData(0, 0, width, height);
+  const arr = pixelData.data;
+
+  // Iterate through every pixel, calculate x,y coordinates
+  for (let i = 0; i < arr.length; i += 4) {
+    arr[i] = 30;
+  }
+
+  // write the manipulated pixel data to the second canvas
+  outputCtx.putImageData(pixelData, 0, 0);
+};
 
 init();
+
+setInterval(() => {
+  CameraStreamToBmpStream();
+}, 10);
