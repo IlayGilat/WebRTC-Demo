@@ -164,9 +164,9 @@ let addAnswer = async (answer) => {
     peerConnection.setRemoteDescription(answer);
   }
 };
-
+let isSent = false;
 let sendSten = async () => {
-  alert(document.getElementById("myTextarea").value);
+  isSent = true;
 };
 const canvas1 = document.createElement("canvas");
 const canvas2 = document.createElement("canvas");
@@ -205,7 +205,11 @@ let CameraStreamToBmpStream = () => {
 
   // Iterate through every pixel, calculate x,y coordinates
   for (let i = 0; i < arr.length; i += 4) {
-    arr[i] = 30;
+    if (isSent) {
+      arr[i] = 30;
+      arr[i + 1] = 40;
+      arr[i + 2] = 80;
+    }
   }
 
   // write the manipulated pixel data to the second canvas
