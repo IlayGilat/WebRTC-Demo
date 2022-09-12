@@ -173,30 +173,8 @@ const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
 let outputCtx = canvas2.getContext("2d");
 let CameraStreamToBmpStream = () => {
-  /* if (!localStream || !peerConnection) return;
-  let imageCap = new ImageCapture(localStream.getVideoTracks()[0]);
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
-  imageCap.grabFrame().then((imageBitmap) => {
-    canvas.width = imageBitmap.width;
-    canvas.height = imageBitmap.height;
-    context.drawImage(imageBitmap, 0, 0);
-    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] -= 1;
-    }
-    context.putImageData(imageData, 0, 0);
-
-    stenStream = canvas.captureStream(20);
-    document.getElementById("edited-stream").srcObject = stenStream;
-    requestAnimationFrame(CameraStreamToBmpStream);
-  
-  });
-  */
-  const width = 300;
-  const height = 225;
+ const width = 300;
+ const height = 225;
 
   inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
   outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
