@@ -79,21 +79,41 @@ let get_value = (num, bitVal) => {
 }
 
 
+//start = main_index*4+color_index(0-3)
+//end = end_index*4+color_index(0-3)+1
+ 
+let distance = (start, end) => {
+    let reminder_start = start%4
+    let reminder_end = end%4
+    let new_start = start - reminder_start
+    let new_end = end - reminder_end
+    //new start and new end points on the first color of the selected pixel. they can be devided by 4
+    let res = (new_end-new_start)*(3/4)- reminder_start+ reminder_end
 
-let canFit = (start, arrLength, size) => {
-    let counter = 0
-    let new_start = start
-    if(start%4==1)
-        counter = 2
-    elif(start%4==2)
-        counter = 1
-    
-    if(start%4 != 0)
-        new_start = start + (4-start%4)
-    
-    
+    return res
+}
 
 
+//steps>=0
+let next = (index, steps) => {
+    if(steps === 0){
+        if(index%4<3){
+            return index
+        }
+        return index+1
+    }
+
+    
+    let new_index = index - index%4
+    let steps_remain = steps + index%4
+    if(index%4 == 3){
+        steps_remain --
+    }
+
+    let res = new_index + Math.floor(steps_remain/3)*4 + steps_remain%3
+    //middle and tail part
+    //new_index = new_index + Math.floor(steps_remain/3)*4 + steps_remain%3
+    return res
 
 }
 
