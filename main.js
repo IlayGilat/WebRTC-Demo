@@ -7,6 +7,14 @@ let uid = String(Math.floor(Math.random() * 10000));
 let client;
 let channel;
 
+let queryString = window.location.search;
+let urlParams = new URLSearchParams(queryString);
+let roomID = urlParams.get("room");
+
+if (!roomID) {
+  window.location = "lobby.html";
+}
+
 let localStream;
 let remoteStream;
 let stenStream;
@@ -25,10 +33,11 @@ let init = async () => {
   client = await AgoraRTM.createInstance(APP_ID);
   await client.login({ uid, token });
 
-  channel = client.createChannel("main");
+  channel = client.createChannel(roomID);
   await channel.join();
 
   channel.on("MemberJoined", handleUserJoined);
+  channel.on("MemberLeft", handleUserLeft);
 
   client.on("MessageFromPeer", handleMessageFromPeer);
   localStream = await navigator.mediaDevices.getUserMedia({
@@ -45,6 +54,9 @@ let init = async () => {
   stenStream = canvas2.captureStream();
 };
 
+let handleUserLeft = (MemberId) => {
+  //Handle When User left
+};
 let grabFrame = () => {
   let imageCap = new ImageCapture(remoteStream.getVideoTracks()[0]);
   const canvas = document.createElement("canvas");
@@ -173,8 +185,8 @@ const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
 let outputCtx = canvas2.getContext("2d");
 let CameraStreamToBmpStream = () => {
- const width = 300;
- const height = 225;
+  const width = 300;
+  const height = 225;
 
   inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
   outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
@@ -193,6 +205,11 @@ let CameraStreamToBmpStream = () => {
   // write the manipulated pixel data to the second canvas
   outputCtx.putImageData(pixelData, 0, 0);
 };
+let leaveChannel = async () => {
+  await channel.leave();
+  await channel.logout();
+};
+window.addEventListener("beforeunload", leaveChannel);
 
 init();
 
