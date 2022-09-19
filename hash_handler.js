@@ -28,11 +28,11 @@ class hash_handler{
             return integer
         }
     }
+    check_next(){
+        return parseInt(this.base_str.charAt(this.pointer), this.base)
+    }
 }
 //not done
 
 export {hash_handler}
-
-
-
 
