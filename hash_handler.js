@@ -3,13 +3,12 @@
 
 class hash_handler{
 
-    constructor(hex_str, base){
-        this.hex_str = hex_str
+    constructor(base_str, base){
         this.pointer = 0
-        let integer = parseInt(hex_str,16)
-        this.base_str = integer.toString(base)
+        this.base_str = base_str
         this.base = base
     }
+
 
     next(){
         if(this.base <= 0 || this.base_str == null)

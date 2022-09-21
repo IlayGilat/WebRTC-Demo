@@ -1,21 +1,26 @@
-import {hash_handler} from './hash_handler'
+import {hash_handler} from './hash_handler.js'
 
 
 const rgb = {0: 'r', 1: 'g', 2:'b', 3:'a'}
-const buffer = "100110011001100110011001"
-const hash_hex = SHA256_handler("abcdefgh")
+const flag = "100110011001100110011001"; //start and end
+const remain_flag = "111000111000111000111000";
+const str = "abdsadsa"
 const bits = 2
 const base = 4
 
 
-function foo() {
-    console.log('lma1o')
-}
+//if functions have bits parameters they can only get or value of 1 or 2
 
-async function SHA256_handler(string) {
-    if(typeof string === "string"){
-        res = await CryptoJS.SHA256(string).toString(Hex)
-        
+
+
+//uses the module CryptoJS to make a sha256 object, it handles it and returns a string with the base we want
+//the functionality of the hash string is to give us a long random indexes to hide our bits in
+function SHA256_to_base(string,base) {
+    if(typeof string === "string" && typeof base==="number" && base>1){
+        //let res ="0b" + CryptoJS.SHA256(string).toString(CryptoJS.enc.Hex).split('').map(i => parseInt(i,16).toString(2).padStart(4,'0')).join('')
+        //res = eval(res)
+        let res = CryptoJS.SHA256(string).words.map(i => i= (new Uint32Array([i]))[0].toString(base)).join('')
+        return res
     }
     return -1   
 }
@@ -28,11 +33,26 @@ let str_to_bin = (text) => {
 
 }
 
-let bin_to_str = () => {
 
+//ascii
+let bin_to_str = (bin_str) => {
+    let char_arr = []
+    for(let i=0;i<bin_str.length;i=i+8){
+        char_arr.push(String.fromCharCode(parseInt(bin_str.substring(i,i+8),2)));
+    }
+    return char_arr.join("");
 }
 
 //bits_n = 1 or 2
+
+
+
+
+
+//not In use (work good with matrix i guess)
+//pixel - 4 colors
+//index = pixel_index*4 + (0-3) 
+//size - bits counter
 let pixels_counter = (start,size,bits_n) =>{
     
     if(bits_n>2 || bits_n<1){
@@ -58,52 +78,87 @@ let pixels_counter = (start,size,bits_n) =>{
 }
 
 
+
+//its mainly created to get the counter parameter that is headen in a known place cell after cell
+
+//bits =  1 or 2
+//this function intended to return a string of 0 and 1 that hidden one after one in the array
+let decode_consistant = (arr, start, size, bits) => {
+    let index = start;
+    let res_str = ""
+    if(distance(start, arr.length, bits)< size)
+        return -1
+    
+    for(let i=0;i<size;i=i+bits){
+        let val
+        if(bits===2 && i+1<size){
+            val  = get_value(arr[index],4).toString(2).padStart(2,'0')
+        }
+        else{
+            val = get_value(arr[index],2).toString(2)
+        }
+        res_str = res_str + val;
+        index = next(index,1)
+    }
+
+    return res_str;
+    
+}
+
+
+
+
+//it works fine for also every bit string you want to put in a consistant way in the arr
 //start = main_index*4+color_index(0-3)
 //arr - the arr is huge so we will slice
-//we will write the buffer on the array usin two bits of the end of the array, because buffer need to defrentiate regular photo to sten one
-let insertBuffer = (arr, start) => {
+//we will write the flag on the array usin two bits of the end of the array, because flag need to defrentiate regular photo to sten one
+let insertflag = (arr, start, flag) => {
     let buff_p = 0;
     let i,color
     let index = next(start,0)
 
-    for(buff_p;buff_p<buffer.length; buff_p = buff_p+2){
+    for(buff_p;buff_p<flag.length; buff_p = buff_p+2){
         if(index >= arr.length*4)
             return -1
         let val
-        if(buff_p+1<buffer.length)
-            val = set_value(arr[Math.floor(index/4)][rgb[index%4]], parseInt(buffer.substring(buff_p, buff_p+2),2),4)
+        if(buff_p+1<flag.length)
+            val = set_value(arr[index], parseInt(flag.substring(buff_p, buff_p+2),2),4)
         else
-            val = set_value(arr[Math.floor(index/4)][rgb[index%4]], parseInt(buffer.charAt(buff_p),2),2)
+            val = set_value(arr[index], parseInt(flag.charAt(buff_p),2),2)
         
-        arr[Math.floor(index/4)][rgb[index%4]] = val
+        arr[index] = val
         index = next(index,1)
-    }
-
-    return arr
-
-}
-let checkBuffer = (arr,start) => {
-    let index=start
-    for(let i=0;i<buffer.length;i=i+2){
-        let val
-        if(i+1<buffer.length)
-        {
-            val = get_value(arr[Math.floor(index/4)][rgb[index%4]],4)
-            if(val!=parseInt(buffer.substring(i,i+2),2)){
-                return -1
-            }
-        }
-        else{
-            val = get_value(arr[Math.floor(index/4)][rgb[index%4]],2)
-            if(val!=parseInt(buffer.charAt(i),2)){
-                return -1
-            }
-        }
-        index = next(index,1)
-            
     }
 
     return 1
+
+}
+
+
+
+//helpes us to check if the data we hiding in a known place is what we want like a flag
+let checkflag = (arr,start, flag) => {
+    let index=start;
+    for(let i=0;i<flag.length;i=i+2){
+        let val;
+        if(i+1<flag.length)
+        {
+            val = get_value(arr[index],4);
+            if(val!=parseInt(flag.substring(i,i+2),2)){
+                return -1;
+            }
+        }
+        else{
+            val = get_value(arr[index],2);
+            if(val!=parseInt(flag.charAt(i),2)){
+                return -1;
+            }
+        }
+        index = next(index,1);
+            
+    }
+
+    return 1;
 }
 //set a value according to the base given
 let set_value = (num, val, base) => {
@@ -118,10 +173,11 @@ let get_value = (num,base) =>{
 }
 
 
+//its for measuring how mych space we got(free cells including the start not including the end)
+//the start counts but the end not
 //start = main_index*4+color_index(0-3)
 //end = end_index*4+color_index(0-3)+1
- 
-let distance = (start, end,bits) => {
+let distance = (start, end, bits) => {
     let reminder_start = start%4
     let reminder_end = end%4
     let new_start = start - reminder_start
@@ -133,6 +189,7 @@ let distance = (start, end,bits) => {
 }
 
 
+//return an index for the cell "steps" steps from "index"
 //steps>=0
 let next = (index, steps) => {
     if(steps === 0){
@@ -163,63 +220,123 @@ let next = (index, steps) => {
 
 
 
+//encodes ascii for now
+//the encoding takes the arr - the values are ints and every 4 cells represent a pixel, we cant touch the "a" parameter,
+//firstly we put a flag that will help us destinct this frame from others for decoding, 
+//after that we save a 16 cells for an 32 bit unsigned int that will represent our bit size that hidden
+//after that we hide the bin_str content with the object hash_handler that give us the next ammpunt of steps we go to the hide the next 2 bits
 
 
-let encrypt = (arr, text = ' ') => {
-    let bin_str = text.split('').map(char => {
-        return char.charCodeAt(0).toString(2);
-     }).join(' ').split(' ');
+//eventually it meant to return the bin_str that remained for an other frame that will carry the part
 
-    if(distance(0,arr.length*4,1)<buffer.length)
+let encode = (arr, text = ' ') => {
+    let bin_str = String(text).split('').map(char => {
+        return char.charCodeAt(0).toString(2).padStart(8,'0');
+     }).join('');
+
+    if(distance(0,arr.length,2)<flag.length)
         return -1
 
 
 
 
-    //buffer    
-    let index_after_buffer = next(0,Math.floor(buffer.length/2)+buffer.length%2)
-    let end_index = Math.floor(index_after_buffer/4)+1
+    //flag + counter
+    let index_after_flag = next(0,Math.floor(flag.length/2)+flag.length%2)
+    let insertFlag_res = insertflag(arr,0,flag)
+    let bin32_str = bin_str.length.toString(2).padStart(32,'0');
+    let insertBin32_res = insertflag(arr,index_after_flag,bin32_str)
 
-    if(index_after_buffer%4>0){
-        end_index++
-    }  
+    //end flag
 
-    let sliced = arr.slice(0,end_index)
-    let buffered_sliced_array = insertBuffer(sliced,0)
-    //end buffer
-
-
+    
     //main
-    let hash = new hash_handler(hash_hex)
-    let sten_index = next(index_after_buffer, 32)
-    let bit_counter = 0
-    for(let str_p=0;str_p<bin_str.length &&  distance(next(sten_index,1),arr.length*4) >= b_plcaces ;str_p=str_p+bits)
+    let hash_obj = new hash_handler(SHA256_to_base(str,4),4);
+    let index = next(index_after_flag, 16);
+    let index_helper=index;
+    let bit_counter = 0;
+    for(let str_p=0;str_p<bin_str.length ;str_p=str_p+2)
     {
-        let val
+        let val;
+        if(index>=arr.length){
+            //returning whats remaining
+            return bin_str.substring(str_p, bin_str.length)
+        }
+
         if(str_p+1<bin_str.length){
-            val = set_value(arr[Math.floor(sten_index/4)][rgb[sten_index%4]], parseInt(bin_str.substring(str_p, str_p+2),2),4)
-            bit_counter = bit_counter+2
+            val = set_value(arr[index], parseInt(bin_str.substring(str_p, str_p+2),2),4);
+            bit_counter = bit_counter+2;
         }
         else{
-            val = set_value(arr[Math.floor(sten_index/4)][rgb[sten_index%4]], parseInt(bin_str.charAt(str_p),2),2)
-            bit_counter++
+            val = set_value(arr[index], parseInt(bin_str.charAt(str_p),2),2);
+            bit_counter++;
         }
-        arr[Math.floor(sten_index/4)][rgb[sten_index%4]] = val
-        sten_index = next(sten_index,hash.next())
+        arr[index] = val;
+        index_helper = index;
+        index = next(index,1+hash_obj.next());
     }
+    console.log("bin_str: ",bin_str.length, "counter: ", bit_counter );
+    console.log("so yeah", next(index_helper,1))
+    
     //end main
+    return 1
 
 
 }
-let decrypt = (arr) => {
-    let after_buffer = next(0,Math.floor(buffer.length/2)+buffer.length%2)
-    let end_pixel = Math.floor(after_buffer/4)
-    if(after_buffer%4>0){
-        end_pixel+1
+
+//decode: gets arr returns the text
+//we first checking for the flag if it exists
+//we get the bit_size of the text
+//we iterate until we get all the bits hidden in the frame
+//decodes ascii for now
+//
+let decode = (arr) => {
+//checkFlag 
+    if(checkflag(arr,0,flag)==-1)
+        return -1;
+    let index = next(0,Math.floor(flag.length/2)+flag.length%2)
+    let int32_str = decode_consistant(arr,index,32,2)
+    let bit_size = parseInt(int32_str,2);
+    console.log("int32_str: ",bit_size)
+//end
+
+
+
+
+    let hash_obj = new hash_handler(SHA256_to_base(str,4),4);
+
+    index = next(index,16);
+    let index_helper = index;
+    let bits = 2; //1 or 2
+    let res_str = "";
+    for(let i=0;i<bit_size; i=i+bits){
+        let val
+        if(i+1<bit_size){
+            val = get_value(arr[index],4).toString(2).padStart(2,'0');
+        }
+        else{
+            val = get_value(arr[index],2).toString(2);
+        }
+        res_str = res_str+val;
+        index_helper = index;
+        index = next(index,1+hash_obj.next());
+
     }
+    let sentence = bin_to_str(res_str);
 
-    let sliced_start = arr.slice(0)
+    console.log("res_str: ", res_str, " index: ", next(index_helper,1));
+    console.log("result: ", sentence);
+    
+
+
+    //return to string
+    return sentence;
+
 }
 
 
 
+
+
+
+
+export {encode,decode, insertflag}

@@ -1,5 +1,15 @@
+import {test1} from './test.js'
+import {encode as encode_arr, insertflag, decode as decode_arr} from './sten.js' 
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
+
+
+
+//test
+let co = 0;
+
+//end test
+
 
 let token = null;
 let uid = String(Math.floor(Math.random() * 10000));
@@ -9,7 +19,7 @@ let channel;
 
 let queryString = window.location.search;
 let urlParams = new URLSearchParams(queryString);
-let roomID = urlParams.get("room");
+let roomID = "123"//urlParams.get("room");
 
 if (!roomID) {
   window.location = "lobby.html";
@@ -201,6 +211,14 @@ let CameraStreamToBmpStream = () => {
       arr[i + 2] = 80;
     }
   }
+  
+  if(co%500==0){
+    let flag = "100110011001100110011001"
+    encode_arr(arr,"hello -sadasd sadsadsdsdsdsd - sdfdsfdsfdsfsdfsdf - sdfdfsdfdfdfdfdfdfdsf")
+    console.log(decode_arr(arr))
+  }
+  co++;
+
 
   // write the manipulated pixel data to the second canvas
   outputCtx.putImageData(pixelData, 0, 0);
@@ -216,3 +234,10 @@ init();
 setInterval(() => {
   CameraStreamToBmpStream();
 }, 10);
+
+
+
+function test(arr){
+  arr[0] = 99
+
+}
