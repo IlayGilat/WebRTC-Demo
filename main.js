@@ -1,5 +1,5 @@
 import {test1} from './test.js'
-import {encode as encode_arr, insertflag, decode as decode_arr} from './sten.js' 
+import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next} from './sten.js' 
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
 
@@ -216,6 +216,7 @@ let CameraStreamToBmpStream = () => {
     let flag = "100110011001100110011001"
     encode_arr(arr,"hello -sadasd sadsadsdsdsdsd - sdfdsfdsfdsfsdfsdf - sdfdfsdfdfdfdfdfdfdsf")
     console.log(decode_arr(arr))
+
   }
   co++;
 
@@ -237,7 +238,3 @@ setInterval(() => {
 
 
 
-function test(arr){
-  arr[0] = 99
-
-}

@@ -2,6 +2,9 @@ import {hash_handler} from './hash_handler.js'
 
 
 const rgb = {0: 'r', 1: 'g', 2:'b', 3:'a'}
+
+
+//all the flags will be in the same length
 const flag = "100110011001100110011001"; //start and end
 const remain_flag = "111000111000111000111000";
 const str = "abdsadsa"
@@ -213,7 +216,25 @@ let next = (index, steps) => {
 
 }
 
+//suppose to work bi directional. if index is on 'a' -  0 and 1 will take it to 'r', -1 will take it to 'g'
+//I created it to help me calculate the limit index with we can hide the data into - because we need a flag at the end to determine 
+// - if the data ended or the data will come on different frames
+let next_signed = (index,steps) => {
+    if(index%4==3 || index%4 ==-1){
+        index++
+        if(steps>0) steps--
+    }
+    let new_index = index - index%4
+    let steps_remain = steps + index%4
+    if(index%4<0) steps_remain++
 
+    let res = new_index + Math.floor(steps_remain/3)*4 + steps_remain%3
+    if(steps_remain%3<0){
+      res = res +3
+    }
+    
+    return res
+}
 
 
 
@@ -254,10 +275,13 @@ let encode = (arr, text = ' ') => {
     let index = next(index_after_flag, 16);
     let index_helper=index;
     let bit_counter = 0;
+    let base=4
+    let char_size = 8
+    let end_index = arr.length-flag.length
     for(let str_p=0;str_p<bin_str.length ;str_p=str_p+2)
     {
         let val;
-        if(index>=arr.length){
+        if(false){
             //returning whats remaining
             return bin_str.substring(str_p, bin_str.length)
         }
@@ -339,4 +363,4 @@ let decode = (arr) => {
 
 
 
-export {encode,decode, insertflag}
+export {encode,decode, insertflag,next_signed ,next}
