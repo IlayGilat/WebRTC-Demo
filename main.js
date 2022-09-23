@@ -214,7 +214,7 @@ let CameraStreamToBmpStream = () => {
   
   if(co%500==0){
     let flag = "100110011001100110011001"
-    encode_arr(arr,"hello -sadasd sadsadsdsdsdsd - sdfdsfdsfdsfsdfsdf - sdfdfsdfdfdfdfdfdfdsf")
+    console.log(encode_arr(arr,"hello -sadasd sadsadsdsdsdsd - sdfdsfdsfdsfsdfsdf - sdfdfsdfdfdfdfdfdfdsf"))
     console.log(decode_arr(arr))
 
   }

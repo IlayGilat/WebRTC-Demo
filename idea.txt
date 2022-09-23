@@ -1,0 +1,5 @@
+my idea is like that:
+for every massage we will create a random int identifier
+there are to flags...
+regular flag that starts and closes a massage
+and a 'remain' flag that will tell us to continue 
