@@ -1,13 +1,15 @@
 import {test1} from './test.js'
-import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next} from './sten.js' 
+import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next,distance} from './sten.js' 
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
 
 
 
 //test
-let co = 0;
 
+
+let dataChannel;
+let isDataChannelOpen = false;
 //end test
 
 
@@ -29,7 +31,6 @@ let localStream;
 let remoteStream;
 let stenStream;
 let peerConnection;
-
 let inputBuffer;
 let outputBuffer;
 const servers = {
@@ -62,6 +63,8 @@ let init = async () => {
 
   document.getElementById("edited-stream").srcObject = canvas2.captureStream();
   stenStream = canvas2.captureStream();
+
+
 };
 
 let handleUserLeft = (MemberId) => {
@@ -110,8 +113,10 @@ let handleUserJoined = async (MemberId) => {
   createOffer(MemberId);
 };
 
+
 let createPeerConnection = async (MemberId) => {
   peerConnection = new RTCPeerConnection(servers);
+  
 
   remoteStream = new MediaStream();
   document.getElementById("user-2").srcObject = remoteStream;
@@ -133,6 +138,7 @@ let createPeerConnection = async (MemberId) => {
     event.streams[0].getTracks().forEach((track) => {
       remoteStream.addTrack(track);
     });
+    remote_track = true;
   };
 
   peerConnection.onicecandidate = async (event) => {
@@ -154,17 +160,51 @@ let createPeerConnection = async (MemberId) => {
     grabFrame();
   }, 50);
   */
+
+  //create data channel (initiator)
+  dataChannel = peerConnection.createDataChannel("sten");
+
+  dataChannel.onerror = (error) => {
+    console.log("Data Channel Error:", error);
+  }
+
+  dataChannel.onmessage = (event) => {
+    console.log("Got Data Channel Message:",event.data);
+  }
+  dataChannel.onopen = () => {
+    dataChannel.send("Hello World!");
+  }
+  dataChannel.onclose = () => {
+    console.log("The Data Channel is Closed");
+    
+  }
 };
 
 let createOffer = async (MemberId) => {
   await createPeerConnection(MemberId);
   let offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
-
   client.sendMessageToPeer(
     { text: JSON.stringify({ type: "offer", offer: offer }) },
     MemberId
   );
+  //second user (reciever)
+  peerConnection.ondatachannel = event => {
+    dataChannel = event.channel;
+    dataChannel.onmessage = event => {
+      console.log("Got Data Channel Massage:",event.data)
+    };
+    dataChannel.onclose = () => {
+      console.log("The Data Channel is Closed");
+      isDataChannelOpen = false;
+    }
+    dataChannel.onerror = (error) => {
+      console.log("Data Channel Error:", error);
+    }
+    isDataChannelOpen = true;
+    dataChannel.send("what")
+  }
+  
 };
 
 let createAnswer = async (MemberId, offer) => {
@@ -186,10 +226,24 @@ let addAnswer = async (answer) => {
     peerConnection.setRemoteDescription(answer);
   }
 };
+
+
+
+
+
 let isSent = false;
 let sendSten = async () => {
   isSent = true;
+  let text = document.getElementById("myTextarea").value
+  if(text==""){
+    return
+  }
+  document.getElementById("myTextarea").value = ""
+
 };
+
+
+document.getElementById("sendButton").onclick = sendSten
 const canvas1 = document.createElement("canvas");
 const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
@@ -204,21 +258,19 @@ let CameraStreamToBmpStream = () => {
   const arr = pixelData.data;
 
   // Iterate through every pixel, calculate x,y coordinates
-  for (let i = 0; i < arr.length; i += 4) {
+  /*for (let i = 0; i < arr.length; i += 4) {
     if (isSent) {
-      arr[i] = 30;
-      arr[i + 1] = 40;
-      arr[i + 2] = 80;
+      arr[i] = 212;
+      arr[i + 1] =212;
+      arr[i + 2] =212;
     }
-  }
-  
-  if(co%500==0){
-    let flag = "100110011001100110011001"
-    console.log(encode_arr(arr,"hello -sadasd sadsadsdsdsdsd - sdfdsfdsfdsfsdfsdf - sdfdfsdfdfdfdfdfdfdsf"))
-    console.log(decode_arr(arr))
+  }*/
 
+  if(isSent){
+    arr[0] = 40;
+    arr[1] = 40;
+    arr[2] = 40;
   }
-  co++;
 
 
   // write the manipulated pixel data to the second canvas
@@ -228,6 +280,30 @@ let leaveChannel = async () => {
   await channel.leave();
   await channel.logout();
 };
+
+
+const canvas3 = document.createElement("canvas");
+let remoteCtx = canvas3.getContext("2d");
+let CameraStreamOfRemoteSource = async () => {
+    const width = 300;
+    const height = 225;
+    //remoteCtx.drawImage(document.getElementById("user-2"),0,0,width,height);
+    //const pixelData = remoteCtx.getImageData(0,0,width,height);
+    //const arr = pixelData.data;
+    //const sliced_arr = arr.slice(0,52)
+    if(remote_track){
+      remoteCtx.drawImage(document.getElementById("user-2"), 0,0,width,height)
+      const pixelData = remoteCtx.getImageData(0,0,width,height)
+      const arr = pixelData.data
+      console.log(arr[0],arr[1],arr[2])
+    }
+}
+
+
+
+
+
+
 window.addEventListener("beforeunload", leaveChannel);
 
 init();
@@ -235,6 +311,10 @@ init();
 setInterval(() => {
   CameraStreamToBmpStream();
 }, 10);
+
+setInterval(() => {
+  //CameraStreamOfRemoteSource();
+},10);
 
 
 

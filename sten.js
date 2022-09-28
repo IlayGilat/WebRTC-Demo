@@ -424,4 +424,4 @@ let decode = (arr) => {
 
 
 
-export {encode,decode, insertflag,next_signed ,next}
+export {encode,decode, insertflag,next_signed ,next, distance}
