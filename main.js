@@ -12,6 +12,8 @@ let ascii_buffer = 10000
 let m_text
 let dataChannel;
 let isDataChannelOpen = false;
+const width = 300;
+const height = 225;
 //end test
 
 
@@ -172,7 +174,7 @@ let createPeerConnection = async (MemberId) => {
   }
 
   dataChannel.onmessage = (event) => {
-    //console.log("Got Data Channel Message:",String(event.data).charAt(0));
+    /*//console.log("Got Data Channel Message:",String(event.data).charAt(0));
     console.log("Got Data Channel Message:",String(event.data).charAt(0));
     //if(event.data==="start"){
     //  isReceivingFrame = true;
@@ -191,8 +193,9 @@ let createPeerConnection = async (MemberId) => {
     }
     else if(isReceivingFrame){
       receivingStr = receivingStr + event.data;
-    }
-
+    }*/
+    onmessageHandler(event)
+  
 
 
 
@@ -219,7 +222,7 @@ let createOffer = async (MemberId) => {
   peerConnection.ondatachannel = event => {
     dataChannel = event.channel;
     dataChannel.onmessage = event => {
-      console.log("Got Data Channel Massage2:",event.data.charAt(0))
+      /*console.log("Got Data Channel Massage2:",event.data.charAt(0))
       if(event.data==="start"){
         isReceivingFrame = true;
   
@@ -231,7 +234,8 @@ let createOffer = async (MemberId) => {
       }
       else if(isReceivingFrame){
         receivingStr = receivingStr + event.data;
-      }
+      }*/
+      onmessageHandler(event)
     };
     dataChannel.onclose = () => {
       console.log("The Data Channel is Closed");
@@ -268,31 +272,49 @@ let addAnswer = async (answer) => {
 };
 
 
+let beforeFirstTime = true;
+let onmessageHandler = (event) => {
+  //console.log("event: ", event.toString())
+
+
+  //console.log("Got Data Channel Massage2:",event.data.charAt(0))
+  if(event.data==="start"){
+    isReceivingFrame = true;
+
+  }
+  else if(event.data === "end"){
+    if(beforeFirstTime){
+      document.getElementById("sten-remote").srcObject = canvas3.captureStream()
+      beforeFirstTime=false;
+    }
+
+    isReceivingFrame = false;
+    let frameData =  str2frame(receivingStr);
+    console.log(frameData)
+    remoteCtx.putImageData(frameData,0,0);
+
+    
+  }
+  else if(isReceivingFrame){
+    receivingStr = receivingStr + event.data;
+  }
+} 
+
+
 
 
 let isSent = false;
-/*let sendSten = async () => {
-  isSent = true;
-  let text = document.getElementById("myTextarea").value
-  if(text==""){
-    return
-  }
-  document.getElementById("myTextarea").value = ""
 
-};*/
-
-
-//document.getElementById("sendButton").onclick = sendSten
 const canvas1 = document.createElement("canvas");
 const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
 let outputCtx = canvas2.getContext("2d");
 let CameraStreamToBmpStream = (text="") => {
-  const width = 300;
-  const height = 225;
+  //const width = 300;
+  //const height = 225;
 
   inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
-  outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
+  //outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
   const pixelData = inputCtx.getImageData(0, 0, width, height);
   const arr = pixelData.data;
   // Iterate through every pixel, calculate x,y coordinates
@@ -305,7 +327,7 @@ let CameraStreamToBmpStream = (text="") => {
   }*/
 
   if(isSent && isDataChannelOpen){
-    arr[0] = 70
+    console.log(arr[170000]) 
     sendFrame(arr);
     isSent = false;
   }
@@ -321,9 +343,11 @@ let leaveChannel = async () => {
 
 const canvas3 = document.createElement("canvas");
 let remoteCtx = canvas3.getContext("2d");
+
+
 let CameraStreamOfRemoteSource = async () => {
-    const width = 300;
-    const height = 225;
+    //const width = 300;
+    //const height = 225;
     //remoteCtx.drawImage(document.getElementById("user-2"),0,0,width,height);
     //const pixelData = remoteCtx.getImageData(0,0,width,height);
     //const arr = pixelData.data;
@@ -344,9 +368,10 @@ let sendFrame = async (arr) => {
     return -1;
   }
 
-  let ascii_str ="";
+  let ascii_str =String();
   for(let i = 0; i < arr.length; i++){
       ascii_str = ascii_str + String.fromCharCode(arr[i]);
+      
   }
 
   //now we got a full ascii string that represents the pixelData array
@@ -355,7 +380,7 @@ let sendFrame = async (arr) => {
   console.log(ascii_str.length)
   dataChannel.send("start");
   for(let i=0; i<ascii_str.length;i=i+ascii_buffer){
-      dataChannel.send(ascii_str.substring(i,i+ascii_buffer));
+      await dataChannel.send(ascii_str.substring(i,i+ascii_buffer));
       c++;
   }
   dataChannel.send("end");
@@ -363,12 +388,15 @@ let sendFrame = async (arr) => {
 
 }
 
-let str2arr = async (str) => {
-  let arr = new Uint8ClampedArray(270000);
+let str2frame = (str) => {
+  let frameData = new ImageData(width,height);
+  let arr = new Uint8ClampedArray(width*height*4);
   for(let i=0;i<str.length;i++){
     arr[i] = str.charCodeAt(i)
+    frameData.data[i] = arr[i]
   }
-  return arr
+  console.log(arr.length)
+  return frameData
   
 }
 
@@ -394,15 +422,15 @@ document.getElementById("sendButton").onclick = sendSten
 
 
 
-
-
 window.addEventListener("beforeunload", leaveChannel);
-
 init();
+
 
 setInterval(() => {
   CameraStreamToBmpStream();
-}, 50);
+}, 150);
+  
+
 
 setInterval(() => {
   //CameraStreamOfRemoteSource();
