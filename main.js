@@ -6,10 +6,13 @@ const FRAME_RATE = 20;
 let remote_track
 
 //test
+let receivingM = ""
 let receivingStr = ""
 let isReceivingFrame = false
 let ascii_buffer = 10000
-let m_text
+let m_text = ""
+let temp_text = ""
+let sender_obj
 let dataChannel;
 let isDataChannelOpen = false;
 const width = 300;
@@ -273,16 +276,57 @@ let addAnswer = async (answer) => {
 
 
 let beforeFirstTime = true;
-let onmessageHandler = (event) => {
+let onmessageHandler = (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   //console.log("event: ", event.toString())
 
 
   //console.log("Got Data Channel Massage2:",event.data.charAt(0))
-  if(event.data==="start"){
+  switch(event.data){
+    case "start-frame":
+      isReceivingFrame = true;
+      break;
+    case "end-frame":
+      if(beforeFirstTime){
+        document.getElementById("sten-remote").srcObject = canvas3.captureStream()
+        beforeFirstTime=false;
+      }
+  
+      isReceivingFrame = false;
+      let frameData =  str2frame(receivingStr);
+      console.log(frameData)
+      let arr = frameData.data
+      let return_obj = decode_arr(arr);
+      if(return_obj == "-1"){
+        console.log("return_obj error")
+        return -1
+      }
+      console.log("output:", return_obj.str)
+      remoteCtx.putImageData(frameData,0,0);
+      receivingM +=return_obj.str
+      receivingStr = ""
+      break;
+    case "end-message":
+      console.log("final message:",receivingM) 
+      receivingM = ""
+      break;
+
+    default:
+      if(isReceivingFrame){
+        receivingStr = receivingStr + event.data;
+      }
+      break;
+
+
+
+  }
+
+
+
+ /* if(event.data==="start-frame"){
     isReceivingFrame = true;
 
   }
-  else if(event.data === "end"){
+  else if(event.data === "end-frame"){
     if(beforeFirstTime){
       document.getElementById("sten-remote").srcObject = canvas3.captureStream()
       beforeFirstTime=false;
@@ -291,46 +335,43 @@ let onmessageHandler = (event) => {
     isReceivingFrame = false;
     let frameData =  str2frame(receivingStr);
     console.log(frameData)
+    let arr = frameData.data
+    let return_obj = decode_arr(arr);
+    console.log("output:", return_obj.str)
     remoteCtx.putImageData(frameData,0,0);
-
+    receivingStr = ""
     
   }
+  
   else if(isReceivingFrame){
     receivingStr = receivingStr + event.data;
-  }
+  }*/
 } 
 
 
 
-
-let isSent = false;
+//let isSent = false;
 
 const canvas1 = document.createElement("canvas");
 const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
 let outputCtx = canvas2.getContext("2d");
-let CameraStreamToBmpStream = (text="") => {
+let CameraStreamToBmpStream = (text="") => {//////////////////sdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
   //const width = 300;
   //const height = 225;
-
   inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
-  //outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
   const pixelData = inputCtx.getImageData(0, 0, width, height);
   const arr = pixelData.data;
-  // Iterate through every pixel, calculate x,y coordinates
-  /*for (let i = 0; i < arr.length; i += 4) {
-    if (isSent) {
-      arr[i] = 212;
-      arr[i + 1] =212;
-      arr[i + 2] =212;
-    }
-  }*/
-
-  if(isSent && isDataChannelOpen){
+  /*if(isSent && isDataChannelOpen){
+    
     console.log(arr[170000]) 
+    let encoded = encode_arr(arr,text=temp_text)
+    //let decoded = decode_arr(arr)
+    //console.log("asdasd", decoded.str)
+    
     sendFrame(arr);
     isSent = false;
-  }
+  }*/
 
   // write the manipulated pixel data to the second canvas
   outputCtx.putImageData(pixelData, 0, 0);
@@ -364,9 +405,7 @@ let CameraStreamOfRemoteSource = async () => {
 
 let sendFrame = async (arr) => {
 
-  if(!(isSent && isDataChannelOpen)){
-    return -1;
-  }
+
 
   let ascii_str =String();
   for(let i = 0; i < arr.length; i++){
@@ -378,15 +417,19 @@ let sendFrame = async (arr) => {
   //we need to devide the string to a couple of massages  - will choose massages that less then 16kB
   let c=1;
   console.log(ascii_str.length)
-  dataChannel.send("start");
+  dataChannel.send("start-frame");
   for(let i=0; i<ascii_str.length;i=i+ascii_buffer){
       await dataChannel.send(ascii_str.substring(i,i+ascii_buffer));
       c++;
   }
-  dataChannel.send("end");
+  dataChannel.send("end-frame");
   console.log("end", --c);
 
 }
+
+
+
+
 
 let str2frame = (str) => {
   let frameData = new ImageData(width,height);
@@ -399,28 +442,55 @@ let str2frame = (str) => {
   return frameData
   
 }
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
+//this is the sender, gets text and send the text via embedded frames to the user
+let sendMessage = async (text)=>{
+  
+  let index = 0
+  let encode_res; 
+  let temp_text = text; 
+  let first_time = true
+  let id=0
+  let part=0;
+  do{
+    await sleep(60);
+    inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
+    let pixelData = inputCtx.getImageData(0, 0, width, height);
+    let arr = pixelData.data;
+    encode_res = encode_arr(arr,temp_text,id,part,undefined)
+    if(encode_res==-1){
+      continue;
+    }
+    index++
+    temp_text = encode_res.str
+    part++;
+    id = encode_res.id;
+    await sendFrame(arr);
+    
+  }
+  while(temp_text!="")
 
- 
+  await dataChannel.send("end-message")
 
+}
 
 let sendSten = async () => {
-  isSent = true;
+
   let text = document.getElementById("myTextarea").value
   if(text==""){
     return
   }
   document.getElementById("myTextarea").value = ""
-  document.getElementById("sendButton").disabled = "true"
-  m_text = text;
-  isSent = true
+  document.getElementById("sendButton").disabled = true
+  await sendMessage(text)
+  console.log("done here bro")
+  document.getElementById("sendButton").disabled = false
 
 };
 document.getElementById("sendButton").onclick = sendSten
-
-
-
-
 
 window.addEventListener("beforeunload", leaveChannel);
 init();
@@ -428,7 +498,7 @@ init();
 
 setInterval(() => {
   CameraStreamToBmpStream();
-}, 150);
+}, 100);
   
 
 

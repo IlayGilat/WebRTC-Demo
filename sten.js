@@ -259,7 +259,7 @@ let cell_counter = (size,bits) => {
 
 //eventually it meant to return the bin_str that remained for an other frame that will carry the part
 
-let encode = (arr, text = ' ', id=0, part=0 ) => {
+let encode = (arr, text = ' ', id=0, part=0,hash_str=str) => {
     let bin_str = String(text).split('').map(char => {
         return char.charCodeAt(0).toString(2).padStart(8,'0');
      }).join('');
@@ -297,7 +297,7 @@ let encode = (arr, text = ' ', id=0, part=0 ) => {
 
     
     //main
-    let hash_obj = new hash_handler(SHA256_to_base(str,4),4);
+    let hash_obj = new hash_handler(SHA256_to_base(hash_str,4),4);
     let index = next(index_after_flag, 16);
     let index_helper=index;
     let bit_counter = 0;
@@ -355,7 +355,7 @@ let encode = (arr, text = ' ', id=0, part=0 ) => {
 //we iterate until we get all the bits hidden in the frame
 //decodes ascii for now
 //
-let decode = (arr) => {
+let decode = (arr, hash_str=str) => {
 //checkFlag 
     if(checkflag(arr,0,flag)==-1 || (arr.length/4)*3<=cell_counter(2*flag.length+16+8,2))
         return -1;
@@ -382,7 +382,7 @@ let decode = (arr) => {
 //"12031001201201210301020102012"
 
 
-    let hash_obj = new hash_handler(SHA256_to_base(str,4),4);
+    let hash_obj = new hash_handler(SHA256_to_base(hash_str,4),4);
 
     index = next(index,16);
     let index_helper = index;
