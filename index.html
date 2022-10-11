@@ -11,11 +11,16 @@
     <div id="videos">
       <video class="video-player" id="user-1" autoplay playsinline></video>
       <video class="video-player" id="user-2" autoplay playsinline></video>
-      <video class="video-player" id="edited-stream" autoplay playsinline></video>
+      <!--<video class="video-player" id="edited-stream" autoplay playsinline></video>-->
       <video class="video-player" id="sten-remote" autoplay playsinline></video>
     </div>
     <div style="margin: 20px">
-      <textarea id="myTextarea"></textarea>
+      <label>Convo:</label><br>
+      <textarea id="callTextarea" style="width:300px;height:150px;" disabled></textarea>
+    </div>
+    <div style="margin: 20px">
+      <label>Write here:</label><br>
+      <textarea id="myTextarea" ></textarea>
       <button id="sendButton" >Send</button>
     </div>
   </body>

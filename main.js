@@ -68,8 +68,8 @@ let init = async () => {
   document.getElementById("user-1").srcObject = localStream;
   document.getElementById("user-1").onclick = grabFrame;
 
-  document.getElementById("edited-stream").srcObject = canvas2.captureStream();
-  stenStream = canvas2.captureStream();
+  /*document.getElementById("edited-stream").srcObject = canvas2.captureStream();*/
+  stenStream = localStream//canvas2.captureStream();
 
 
 };
@@ -293,20 +293,28 @@ let onmessageHandler = (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   
       isReceivingFrame = false;
       let frameData =  str2frame(receivingStr);
-      console.log(frameData)
+      //console.log(frameData)
       let arr = frameData.data
       let return_obj = decode_arr(arr);
       if(return_obj == "-1"){
         console.log("return_obj error")
         return -1
       }
-      console.log("output:", return_obj.str)
+      //console.log("output:", return_obj.str)
       remoteCtx.putImageData(frameData,0,0);
       receivingM +=return_obj.str
       receivingStr = ""
       break;
     case "end-message":
       console.log("final message:",receivingM) 
+
+
+
+      ///here need to take the massage from recieveingM before its gone
+      let convoTextarea = document.getElementById("callTextarea")
+      convoTextarea.value += 'RemoteSrc:\n'+receivingM +'\n'
+
+
       receivingM = ""
       break;
 
@@ -397,7 +405,7 @@ let CameraStreamOfRemoteSource = async () => {
       remoteCtx.drawImage(document.getElementById("user-2"), 0,0,width,height)
       const pixelData = remoteCtx.getImageData(0,0,width,height)
       const arr = pixelData.data
-      console.log(arr[0],arr[1],arr[2])
+      //console.log(arr[0],arr[1],arr[2])
     }
 }
 
@@ -416,14 +424,14 @@ let sendFrame = async (arr) => {
   //now we got a full ascii string that represents the pixelData array
   //we need to devide the string to a couple of massages  - will choose massages that less then 16kB
   let c=1;
-  console.log(ascii_str.length)
+  //console.log(ascii_str)
   dataChannel.send("start-frame");
   for(let i=0; i<ascii_str.length;i=i+ascii_buffer){
       await dataChannel.send(ascii_str.substring(i,i+ascii_buffer));
       c++;
   }
   dataChannel.send("end-frame");
-  console.log("end", --c);
+  //console.log("end", --c);
 
 }
 
@@ -438,7 +446,7 @@ let str2frame = (str) => {
     arr[i] = str.charCodeAt(i)
     frameData.data[i] = arr[i]
   }
-  console.log(arr.length)
+  //console.log(arr.length)
   return frameData
   
 }
@@ -474,6 +482,11 @@ let sendMessage = async (text)=>{
   while(temp_text!="")
 
   await dataChannel.send("end-message")
+  let convoTextarea = document.getElementById("callTextarea")
+
+
+  //writes the user part
+  convoTextarea.value +="me:\n"+text+'\n';
 
 }
 
@@ -486,7 +499,7 @@ let sendSten = async () => {
   document.getElementById("myTextarea").value = ""
   document.getElementById("sendButton").disabled = true
   await sendMessage(text)
-  console.log("done here bro")
+  //.log("done here bro")
   document.getElementById("sendButton").disabled = false
 
 };
@@ -497,7 +510,7 @@ init();
 
 
 setInterval(() => {
-  CameraStreamToBmpStream();
+  //CameraStreamToBmpStream();
 }, 100);
   
 
