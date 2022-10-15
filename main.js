@@ -1,4 +1,4 @@
-import {sleep,makeid,str2frame,sendFrame} from './test.js'
+import {sleep,makeid,str2frame,sendFrame,sendMessage} from './main_handler.js'
 import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next,distance} from './sten.js' 
 import {generateRsaPair,exportCryptoKey,importCryptoKey,rsa_encrypt,rsa_decrypt} from './rsa_handler.js'
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
@@ -28,6 +28,10 @@ let isDataChannelOpen = false;
 const width = 300;
 const height = 225;
 
+const canvas1 = document.createElement("canvas");
+const canvas2 = document.createElement("canvas");
+let inputCtx = canvas1.getContext("2d");
+let outputCtx = canvas2.getContext("2d");
 
 
 let token = null;
@@ -307,22 +311,9 @@ let onmessageHandler = async (event) => {
         receivingStr = receivingStr + event.data;
       }
       break;
-
-
-
   }
-
-
 } 
 
-
-
-//let isSent = false;
-
-const canvas1 = document.createElement("canvas");
-const canvas2 = document.createElement("canvas");
-let inputCtx = canvas1.getContext("2d");
-let outputCtx = canvas2.getContext("2d");
 
 let leaveChannel = async () => {
   await channel.leave();
@@ -334,42 +325,9 @@ const canvas3 = document.createElement("canvas");
 let remoteCtx = canvas3.getContext("2d");
 
 
-
+//obj{text, inputCtx,width,height,dataChannel,remote_hash_str}
 //this is the sender, gets text and send the text via embedded frames to the user
-let sendMessage = async (text)=>{
-  
-  let index = 0
-  let encode_res; 
-  let temp_text = text; 
-  let first_time = true
-  let id=0
-  let part=0;
-  do{
-    await sleep(60);
-    inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
-    let pixelData = inputCtx.getImageData(0, 0, width, height);
-    let arr = pixelData.data;
-    encode_res = encode_arr(arr,temp_text,id,part,remote_hash_str)
-    if(encode_res==-1){
-      continue;
-    }
-    index++
-    temp_text = encode_res.str
-    part++;
-    id = encode_res.id;
-    await sendFrame(arr,dataChannel);
-    
-  }
-  while(temp_text!="")
 
-  await dataChannel.send("end-message")
-  let convoTextarea = document.getElementById("callTextarea")
-
-
-  //writes the user part
-  convoTextarea.value +="me:\n"+text+'\n';
-
-}
 
 let sendSten = async () => {
 
@@ -385,7 +343,7 @@ let sendSten = async () => {
 
   document.getElementById("myTextarea").value = ""
   document.getElementById("sendButton").disabled = true
-  await sendMessage(text)
+  await sendMessage(text,inputCtx,width,height,dataChannel,remote_hash_str)
   //.log("done here bro")
   document.getElementById("sendButton").disabled = false
 
