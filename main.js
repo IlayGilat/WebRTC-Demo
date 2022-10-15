@@ -1,4 +1,4 @@
-import {test1} from './test.js'
+import {sleep,makeid,str2frame,sendFrame} from './test.js'
 import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next,distance} from './sten.js' 
 import {generateRsaPair,exportCryptoKey,importCryptoKey,rsa_encrypt,rsa_decrypt} from './rsa_handler.js'
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
@@ -263,7 +263,7 @@ let onmessageHandler = async (event) => {
       }
   
       isReceivingFrame = false;
-      let frameData =  str2frame(receivingStr);
+      let frameData =  str2frame(receivingStr,width,height);
       let arr = frameData.data
       let return_obj = decode_arr(arr,current_hash_str);
       if(return_obj == "-1"){
@@ -335,56 +335,6 @@ let remoteCtx = canvas3.getContext("2d");
 
 
 
-function makeid(length) {
-    var result           = '';
-    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    var charactersLength = characters.length;
-    for ( var i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * 
- charactersLength));
-   }
-   return result;
-}
-
-
-let sendFrame = async (arr) => {
-
-
-
-  let ascii_str =String();
-  for(let i = 0; i < arr.length; i++){
-      ascii_str = ascii_str + String.fromCharCode(arr[i]);
-      
-  }
-
-  //now we got a full ascii string that represents the pixelData array
-  //we need to devide the string to a couple of massages  - will choose massages that less then 16kB
-  let c=1;
-  dataChannel.send("start-frame");
-  for(let i=0; i<ascii_str.length;i=i+ascii_buffer){
-      await dataChannel.send(ascii_str.substring(i,i+ascii_buffer));
-      c++;
-  }
-  dataChannel.send("end-frame");
-  //console.log("end", --c);
-
-}
-
-let str2frame = (str) => {
-  let frameData = new ImageData(width,height);
-  let arr = new Uint8ClampedArray(width*height*4);
-  for(let i=0;i<str.length;i++){
-    arr[i] = str.charCodeAt(i)
-    frameData.data[i] = arr[i]
-  }
-  //console.log(arr.length)
-  return frameData
-  
-}
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 //this is the sender, gets text and send the text via embedded frames to the user
 let sendMessage = async (text)=>{
   
@@ -407,7 +357,7 @@ let sendMessage = async (text)=>{
     temp_text = encode_res.str
     part++;
     id = encode_res.id;
-    await sendFrame(arr);
+    await sendFrame(arr,dataChannel);
     
   }
   while(temp_text!="")
@@ -431,7 +381,7 @@ let sendSten = async () => {
   if(!(isDataChannelOpen && isRemotePublicKeyExists && remote_hash_str!="")){
     return 
   }
-
+  
 
   document.getElementById("myTextarea").value = ""
   document.getElementById("sendButton").disabled = true
