@@ -29,6 +29,7 @@ const width = 300;
 const height = 225;
 
 
+
 let token = null;
 let uid = String(Math.floor(Math.random() * 10000));
 
@@ -186,30 +187,7 @@ let createPeerConnection = async (MemberId) => {
   }
 
   dataChannel.onmessage = (event) => {
-    /*//console.log("Got Data Channel Message:",String(event.data).charAt(0));
-    console.log("Got Data Channel Message:",String(event.data).charAt(0));
-    //if(event.data==="start"){
-    //  isReceivingFrame = true;
-
-    //}
-    //if(event.data === "end")
-
-    if(event.data==="start"){
-      isReceivingFrame = true;
-
-    }
-    else if(event.data === "end"){
-      isReceivingFrame = false;
-      let arr = str2arr(receivingStr);
-      console.log(arr.data)
-    }
-    else if(isReceivingFrame){
-      receivingStr = receivingStr + event.data;
-    }*/
     onmessageHandler(event)
-  
-
-
 
   }
   dataChannel.onopen = async () => {
@@ -234,19 +212,6 @@ let createOffer = async (MemberId) => {
   peerConnection.ondatachannel = async (event) => {
     dataChannel = event.channel;
     dataChannel.onmessage = event => {
-      /*console.log("Got Data Channel Massage2:",event.data.charAt(0))
-      if(event.data==="start"){
-        isReceivingFrame = true;
-  
-      }
-      else if(event.data === "end"){
-        isReceivingFrame = false;
-        let arr = str2arr(receivingStr);
-        console.log(arr)
-      }
-      else if(isReceivingFrame){
-        receivingStr = receivingStr + event.data;
-      }*/
       onmessageHandler(event)
     };
     dataChannel.onclose = () => {
@@ -285,11 +250,8 @@ let addAnswer = async (answer) => {
 
 
 let beforeFirstTime = true;
-let onmessageHandler = async (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  //console.log("event: ", event.toString())
+let onmessageHandler = async (event) => {
 
-
-  //console.log("Got Data Channel Massage2:",event.data.charAt(0))
   switch(event.data){
     case "start-frame":
       isReceivingFrame = true;
@@ -302,14 +264,12 @@ let onmessageHandler = async (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   
       isReceivingFrame = false;
       let frameData =  str2frame(receivingStr);
-      //console.log(frameData)
       let arr = frameData.data
       let return_obj = decode_arr(arr,current_hash_str);
       if(return_obj == "-1"){
         console.log("return_obj error")
         return -1
       }
-      //console.log("output:", return_obj.str)
       remoteCtx.putImageData(frameData,0,0);
       receivingM +=return_obj.str
       receivingStr = ""
@@ -353,31 +313,6 @@ let onmessageHandler = async (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   }
 
 
-
- /* if(event.data==="start-frame"){
-    isReceivingFrame = true;
-
-  }
-  else if(event.data === "end-frame"){
-    if(beforeFirstTime){
-      document.getElementById("sten-remote").srcObject = canvas3.captureStream()
-      beforeFirstTime=false;
-    }
-
-    isReceivingFrame = false;
-    let frameData =  str2frame(receivingStr);
-    console.log(frameData)
-    let arr = frameData.data
-    let return_obj = decode_arr(arr);
-    console.log("output:", return_obj.str)
-    remoteCtx.putImageData(frameData,0,0);
-    receivingStr = ""
-    
-  }
-  
-  else if(isReceivingFrame){
-    receivingStr = receivingStr + event.data;
-  }*/
 } 
 
 
@@ -388,26 +323,7 @@ const canvas1 = document.createElement("canvas");
 const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
 let outputCtx = canvas2.getContext("2d");
-let CameraStreamToBmpStream = (text="") => {//////////////////sdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
-  //const width = 300;
-  //const height = 225;
-  inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
-  const pixelData = inputCtx.getImageData(0, 0, width, height);
-  const arr = pixelData.data;
-  /*if(isSent && isDataChannelOpen){
-    
-    console.log(arr[170000]) 
-    let encoded = encode_arr(arr,text=temp_text)
-    //let decoded = decode_arr(arr)
-    //console.log("asdasd", decoded.str)
-    
-    sendFrame(arr);
-    isSent = false;
-  }*/
 
-  // write the manipulated pixel data to the second canvas
-  outputCtx.putImageData(pixelData, 0, 0);
-};
 let leaveChannel = async () => {
   await channel.leave();
   await channel.logout();
@@ -418,20 +334,6 @@ const canvas3 = document.createElement("canvas");
 let remoteCtx = canvas3.getContext("2d");
 
 
-let CameraStreamOfRemoteSource = async () => {
-    //const width = 300;
-    //const height = 225;
-    //remoteCtx.drawImage(document.getElementById("user-2"),0,0,width,height);
-    //const pixelData = remoteCtx.getImageData(0,0,width,height);
-    //const arr = pixelData.data;
-    //const sliced_arr = arr.slice(0,52)
-    if(remote_track){
-      remoteCtx.drawImage(document.getElementById("user-2"), 0,0,width,height)
-      const pixelData = remoteCtx.getImageData(0,0,width,height)
-      const arr = pixelData.data
-      //console.log(arr[0],arr[1],arr[2])
-    }
-}
 
 function makeid(length) {
     var result           = '';
@@ -458,7 +360,6 @@ let sendFrame = async (arr) => {
   //now we got a full ascii string that represents the pixelData array
   //we need to devide the string to a couple of massages  - will choose massages that less then 16kB
   let c=1;
-  //console.log(ascii_str)
   dataChannel.send("start-frame");
   for(let i=0; i<ascii_str.length;i=i+ascii_buffer){
       await dataChannel.send(ascii_str.substring(i,i+ascii_buffer));
@@ -468,10 +369,6 @@ let sendFrame = async (arr) => {
   //console.log("end", --c);
 
 }
-
-
-
-
 
 let str2frame = (str) => {
   let frameData = new ImageData(width,height);
@@ -544,23 +441,6 @@ let sendSten = async () => {
 
 };
 document.getElementById("sendButton").onclick = sendSten
-
 window.addEventListener("beforeunload", leaveChannel);
 init();
 
-
-setInterval(() => {
-  //CameraStreamToBmpStream();
-}, 100);
-  
-
-
-setInterval(() => {
-  //CameraStreamOfRemoteSource();
-},10);
-
-
-
-
-//console.log(await exportCryptoKey(rsa_pair.publicKey));
-//console.log("b",b);
