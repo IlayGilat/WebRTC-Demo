@@ -1,11 +1,21 @@
 import {test1} from './test.js'
 import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next,distance} from './sten.js' 
+import {generateRsaPair,exportCryptoKey,importCryptoKey,rsa_encrypt,rsa_decrypt} from './rsa_handler.js'
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
 
 let remote_track
 
 //test
+
+let current_hash_str = ""
+let remote_hash_str = ""
+
+
+let isRemotePublicKeyExists = false;
+let remote_public_key
+const rsa_pair = await generateRsaPair();
+
 let receivingM = ""
 let receivingStr = ""
 let isReceivingFrame = false
@@ -17,7 +27,6 @@ let dataChannel;
 let isDataChannelOpen = false;
 const width = 300;
 const height = 225;
-//end test
 
 
 let token = null;
@@ -203,8 +212,8 @@ let createPeerConnection = async (MemberId) => {
 
 
   }
-  dataChannel.onopen = () => {
-    dataChannel.send("Hello World! ");
+  dataChannel.onopen = async () => {
+    dataChannel.send(await exportCryptoKey(rsa_pair.publicKey));
     isDataChannelOpen = true;
   }
   dataChannel.onclose = () => {
@@ -222,7 +231,7 @@ let createOffer = async (MemberId) => {
     MemberId
   );
   //second user (reciever)
-  peerConnection.ondatachannel = event => {
+  peerConnection.ondatachannel = async (event) => {
     dataChannel = event.channel;
     dataChannel.onmessage = event => {
       /*console.log("Got Data Channel Massage2:",event.data.charAt(0))
@@ -249,7 +258,7 @@ let createOffer = async (MemberId) => {
       isDataChannelOpen = false;
     }
     isDataChannelOpen = true;
-    dataChannel.send("what")
+    dataChannel.send(await exportCryptoKey(rsa_pair.publicKey));
   }
   
 };
@@ -276,7 +285,7 @@ let addAnswer = async (answer) => {
 
 
 let beforeFirstTime = true;
-let onmessageHandler = (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+let onmessageHandler = async (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   //console.log("event: ", event.toString())
 
 
@@ -295,7 +304,7 @@ let onmessageHandler = (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       let frameData =  str2frame(receivingStr);
       //console.log(frameData)
       let arr = frameData.data
-      let return_obj = decode_arr(arr);
+      let return_obj = decode_arr(arr,current_hash_str);
       if(return_obj == "-1"){
         console.log("return_obj error")
         return -1
@@ -306,7 +315,7 @@ let onmessageHandler = (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       receivingStr = ""
       break;
     case "end-message":
-      console.log("final message:",receivingM) 
+      //console.log("final message:",receivingM) 
 
 
 
@@ -318,7 +327,22 @@ let onmessageHandler = (event) => {//dfgsdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
       receivingM = ""
       break;
 
+
+    
     default:
+      //check remote public key
+      if(/^(-----BEGIN PUBLIC KEY-----\n)/.test(event.data) && /(\n-----END PUBLIC KEY-----)$/.test(event.data)){
+        remote_public_key = await importCryptoKey(event.data)
+        current_hash_str = makeid(16);
+        await dataChannel.send("---string---"+await rsa_encrypt(remote_public_key,current_hash_str));
+        isRemotePublicKeyExists = true;
+        break;
+      }
+      if(/^---string---/.test(event.data)){
+        remote_hash_str = await rsa_decrypt(rsa_pair.privateKey,event.data.substring(12,event.data.length))
+        //console.log("remote_hash_str", remote_hash_str)
+      }
+
       if(isReceivingFrame){
         receivingStr = receivingStr + event.data;
       }
@@ -409,6 +433,16 @@ let CameraStreamOfRemoteSource = async () => {
     }
 }
 
+function makeid(length) {
+    var result           = '';
+    var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * 
+ charactersLength));
+   }
+   return result;
+}
 
 
 let sendFrame = async (arr) => {
@@ -468,7 +502,7 @@ let sendMessage = async (text)=>{
     inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
     let pixelData = inputCtx.getImageData(0, 0, width, height);
     let arr = pixelData.data;
-    encode_res = encode_arr(arr,temp_text,id,part,undefined)
+    encode_res = encode_arr(arr,temp_text,id,part,remote_hash_str)
     if(encode_res==-1){
       continue;
     }
@@ -496,6 +530,12 @@ let sendSten = async () => {
   if(text==""){
     return
   }
+
+  if(!(isDataChannelOpen && isRemotePublicKeyExists && remote_hash_str!="")){
+    return 
+  }
+
+
   document.getElementById("myTextarea").value = ""
   document.getElementById("sendButton").disabled = true
   await sendMessage(text)
@@ -521,3 +561,6 @@ setInterval(() => {
 
 
 
+
+//console.log(await exportCryptoKey(rsa_pair.publicKey));
+//console.log("b",b);

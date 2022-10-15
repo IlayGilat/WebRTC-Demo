@@ -336,8 +336,8 @@ let encode = (arr, text = ' ', id=0, part=0,hash_str=str) => {
         insertflag(arr,next(index_helper,1),flag)
     }
     
-    console.log("bin_str: ", bin_str.length, "counter: ", bit_counter );
-    console.log("so yeah", next(index_helper,1))
+    //console.log("bin_str: ", bin_str.length, "counter: ", bit_counter );
+    //console.log("so yeah", next(index_helper,1))
     
     obj.str = text.substring(Math.floor(bit_counter/char_size),text.length)
     obj.id = temp_id
@@ -377,7 +377,7 @@ let decode = (arr, hash_str=str) => {
     obj.id = id
     obj.part = part
 
-    console.log("int32_str: ",bit_size)
+    //console.log("int32_str: ",bit_size)
 //end
 //"12031001201201210301020102012"
 
