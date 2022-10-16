@@ -42,7 +42,7 @@ let channel;
 
 let queryString = window.location.search;
 let urlParams = new URLSearchParams(queryString);
-let roomID = "123"//urlParams.get("room");
+let roomID = "1234"//urlParams.get("room");
 
 if (!roomID) {
   window.location = "lobby.html";
@@ -80,9 +80,6 @@ let init = async () => {
   });
 
   document.getElementById("user-1").srcObject = localStream;
-  document.getElementById("user-1").onclick = grabFrame;
-
-  /*document.getElementById("edited-stream").srcObject = canvas2.captureStream();*/
   stenStream = localStream//canvas2.captureStream();
 
 
@@ -91,30 +88,7 @@ let init = async () => {
 let handleUserLeft = (MemberId) => {
   //Handle When User left
 };
-let grabFrame = () => {
-  let imageCap = new ImageCapture(remoteStream.getVideoTracks()[0]);
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
 
-  imageCap.grabFrame().then((imageBitmap) => {
-    console.log("Grabbed frame: ", imageBitmap);
-    canvas.width = imageBitmap.width;
-    canvas.height = imageBitmap.height;
-    context.drawImage(imageBitmap, 0, 0);
-    const data = context.getImageData(0, 0, 50, 50).data;
-    const rgbaArr = [];
-    for (let i = 0; i < data.length; i += 4) {
-      const rgba = {
-        r: data[i],
-        g: data[i + 1],
-        b: data[i + 2],
-        a: data[i + 3],
-      };
-      rgbaArr.push(rgba);
-    }
-    console.log(rgbaArr);
-  });
-};
 let handleMessageFromPeer = async (message, MemberId) => {
   message = JSON.parse(message.text);
   if (message.type === "offer") {
@@ -339,12 +313,10 @@ let sendSten = async () => {
   if(!(isDataChannelOpen && isRemotePublicKeyExists && remote_hash_str!="")){
     return 
   }
-  
 
   document.getElementById("myTextarea").value = ""
   document.getElementById("sendButton").disabled = true
   await sendMessage(text,inputCtx,width,height,dataChannel,remote_hash_str)
-  //.log("done here bro")
   document.getElementById("sendButton").disabled = false
 
 };
