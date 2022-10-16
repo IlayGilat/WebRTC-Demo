@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      media="screen"
+      href="../styles/main.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
+    <title>Video Sten</title>
+  </head>
+  <body class="bg-transparent">
+    <h1 id="title" class="text-center p-4"></h1>
+    <div id="videos" class="mt-5">
+      <video
+        class="video-player mx-auto"
+        id="user-1"
+        autoplay
+        playsinline
+      ></video>
+      <video
+        id="user-2"
+        autoplay
+        playsinline
+        class="video-player mx-auto"
+      ></video>
+      <!--<video class="video-player" id="edited-stream" autoplay playsinline></video>-->
+    </div>
+    <div
+      class="d-flex align-items-center justify-content-center flex-column mt-5"
+    >
+      <textarea
+        class="form-control bg-transparent text-white"
+        id="callTextarea"
+        style="width: 20%; height: 170px"
+        disabled
+      ></textarea>
+    </div>
+    <div
+      class="mx-auto mt-5 flex-column d-flex align-items-center justify-content-center"
+      style="width: 25%"
+    >
+      <label>Write here:</label><br />
+      <textarea
+        id="myTextarea"
+        class="form-control bg-transparent text-white"
+      ></textarea>
+      <button id="sendButton" class="btn btn-primary mt-2 btn-lg">Send</button>
+      <video
+        class="video-player mt-5"
+        id="sten-remote"
+        autoplay
+        playsinline
+      ></video>
+    </div>
+  </body>
+  <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js" integrity="sha512-NQVmLzNy4Lr5QTrmXvq/WzTMUnRHmv7nyIT/M6LyGPBS+TIeRxZ+YQaqWxjpRpvRMQSuYPQURZz/+pLi81xXeA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"
+    integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="../lib/agora-rtm-sdk-1.5.1.js"></script>
+  <script type="module" src="../lib/hash_handler.js"></script>
+  <script type="module" src="../lib/sten.js"></script>
+  <script type="module" src="../lib/rsa_handler.js"></script>
+  <script type="module" src="../lib/main_handler.js"></script>
+  <script type="module" src="../main.js"></script>
+</html>

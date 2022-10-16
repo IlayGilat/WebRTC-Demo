@@ -1,5 +1,55 @@
+import {
+  sleep,
+  makeid,
+  str2frame,
+  sendFrame,
+  sendMessage,
+} from "./lib/main_handler.js";
+import {
+  encode as encode_arr,
+  insertflag,
+  decode as decode_arr,
+  next_signed,
+  next,
+  distance,
+} from "./lib/sten.js";
+import {
+  generateRsaPair,
+  exportCryptoKey,
+  importCryptoKey,
+  rsa_encrypt,
+  rsa_decrypt,
+} from "./lib/rsa_handler.js";
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
+
+let remote_track;
+
+//test
+
+let current_hash_str = "";
+let remote_hash_str = "";
+
+let isRemotePublicKeyExists = false;
+let remote_public_key;
+const rsa_pair = await generateRsaPair();
+
+let receivingM = "";
+let receivingStr = "";
+let isReceivingFrame = false;
+let ascii_buffer = 10000;
+let m_text = "";
+let temp_text = "";
+let sender_obj;
+let dataChannel;
+let isDataChannelOpen = false;
+const width = 300;
+const height = 225;
+
+const canvas1 = document.createElement("canvas");
+const canvas2 = document.createElement("canvas");
+let inputCtx = canvas1.getContext("2d");
+let outputCtx = canvas2.getContext("2d");
 
 let token = null;
 let uid = String(Math.floor(Math.random() * 10000));
@@ -10,16 +60,16 @@ let channel;
 let queryString = window.location.search;
 let urlParams = new URLSearchParams(queryString);
 let roomID = urlParams.get("room");
-
+console.log(roomID);
+document.getElementById("title").innerHTML = `Room ${roomID}`; //urlParams.get("room");
 if (!roomID) {
-  window.location = "lobby.html";
+  window.location = "home.html";
 }
 
 let localStream;
 let remoteStream;
 let stenStream;
 let peerConnection;
-
 let inputBuffer;
 let outputBuffer;
 const servers = {
@@ -50,8 +100,8 @@ let init = async () => {
   document.getElementById("user-1").srcObject = localStream;
   document.getElementById("user-1").onclick = grabFrame;
 
-  document.getElementById("edited-stream").srcObject = canvas2.captureStream();
-  stenStream = canvas2.captureStream();
+  /*document.getElementById("edited-stream").srcObject = canvas2.captureStream();*/
+  stenStream = localStream; //canvas2.captureStream();
 };
 
 let handleUserLeft = (MemberId) => {
@@ -123,6 +173,7 @@ let createPeerConnection = async (MemberId) => {
     event.streams[0].getTracks().forEach((track) => {
       remoteStream.addTrack(track);
     });
+    remote_track = true;
   };
 
   peerConnection.onicecandidate = async (event) => {
@@ -144,17 +195,53 @@ let createPeerConnection = async (MemberId) => {
     grabFrame();
   }, 50);
   */
+
+  //create data channel (initiator)
+  dataChannel = peerConnection.createDataChannel("sten");
+
+  dataChannel.onerror = (error) => {
+    console.log("Data Channel Error:", error);
+    isDataChannelOpen = false;
+  };
+
+  dataChannel.onmessage = (event) => {
+    onmessageHandler(event);
+  };
+  dataChannel.onopen = async () => {
+    dataChannel.send(await exportCryptoKey(rsa_pair.publicKey));
+    isDataChannelOpen = true;
+  };
+  dataChannel.onclose = () => {
+    console.log("The Data Channel is Closed");
+    isDataChannelOpen - false;
+  };
 };
 
 let createOffer = async (MemberId) => {
   await createPeerConnection(MemberId);
   let offer = await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
-
   client.sendMessageToPeer(
     { text: JSON.stringify({ type: "offer", offer: offer }) },
     MemberId
   );
+  //second user (reciever)
+  peerConnection.ondatachannel = async (event) => {
+    dataChannel = event.channel;
+    dataChannel.onmessage = (event) => {
+      onmessageHandler(event);
+    };
+    dataChannel.onclose = () => {
+      console.log("The Data Channel is Closed");
+      isDataChannelOpen = false;
+    };
+    dataChannel.onerror = (error) => {
+      console.log("Data Channel Error:", error);
+      isDataChannelOpen = false;
+    };
+    isDataChannelOpen = true;
+    dataChannel.send(await exportCryptoKey(rsa_pair.publicKey));
+  };
 };
 
 let createAnswer = async (MemberId, offer) => {
@@ -176,43 +263,108 @@ let addAnswer = async (answer) => {
     peerConnection.setRemoteDescription(answer);
   }
 };
-let isSent = false;
-let sendSten = async () => {
-  isSent = true;
-};
-const canvas1 = document.createElement("canvas");
-const canvas2 = document.createElement("canvas");
-let inputCtx = canvas1.getContext("2d");
-let outputCtx = canvas2.getContext("2d");
-let CameraStreamToBmpStream = () => {
-  const width = 300;
-  const height = 225;
 
-  inputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
-  outputCtx.drawImage(document.getElementById("user-1"), 0, 0, width, height);
-  const pixelData = inputCtx.getImageData(0, 0, width, height);
-  const arr = pixelData.data;
+let beforeFirstTime = true;
+let onmessageHandler = async (event) => {
+  switch (event.data) {
+    case "start-frame":
+      isReceivingFrame = true;
+      break;
+    case "end-frame":
+      if (beforeFirstTime) {
+        document.getElementById("sten-remote").srcObject =
+          canvas3.captureStream();
+        beforeFirstTime = false;
+      }
 
-  // Iterate through every pixel, calculate x,y coordinates
-  for (let i = 0; i < arr.length; i += 4) {
-    if (isSent) {
-      arr[i] = 30;
-      arr[i + 1] = 40;
-      arr[i + 2] = 80;
-    }
+      isReceivingFrame = false;
+      let frameData = str2frame(receivingStr, width, height);
+      let arr = frameData.data;
+      let return_obj = decode_arr(arr, current_hash_str);
+      if (return_obj == "-1") {
+        console.log("return_obj error");
+        return -1;
+      }
+      remoteCtx.putImageData(frameData, 0, 0);
+      receivingM += return_obj.str;
+      receivingStr = "";
+      break;
+    case "end-message":
+      //console.log("final message:",receivingM)
+
+      ///here need to take the massage from recieveingM before its gone
+      let convoTextarea = document.getElementById("callTextarea");
+      convoTextarea.value += "friend: " + receivingM + "\n";
+
+      receivingM = "";
+      break;
+
+    default:
+      //check remote public key
+      if (
+        /^(-----BEGIN PUBLIC KEY-----\n)/.test(event.data) &&
+        /(\n-----END PUBLIC KEY-----)$/.test(event.data)
+      ) {
+        remote_public_key = await importCryptoKey(event.data);
+        current_hash_str = makeid(16);
+        await dataChannel.send(
+          "---string---" +
+            (await rsa_encrypt(remote_public_key, current_hash_str))
+        );
+        isRemotePublicKeyExists = true;
+        break;
+      }
+      if (/^---string---/.test(event.data)) {
+        remote_hash_str = await rsa_decrypt(
+          rsa_pair.privateKey,
+          event.data.substring(12, event.data.length)
+        );
+        //console.log("remote_hash_str", remote_hash_str)
+      }
+
+      if (isReceivingFrame) {
+        receivingStr = receivingStr + event.data;
+      }
+      break;
   }
-
-  // write the manipulated pixel data to the second canvas
-  outputCtx.putImageData(pixelData, 0, 0);
 };
+
 let leaveChannel = async () => {
   await channel.leave();
   await channel.logout();
 };
+
+const canvas3 = document.createElement("canvas");
+let remoteCtx = canvas3.getContext("2d");
+
+//obj{text, inputCtx,width,height,dataChannel,remote_hash_str}
+//this is the sender, gets text and send the text via embedded frames to the user
+
+let sendSten = async () => {
+  let text = document.getElementById("myTextarea").value;
+  if (text == "") {
+    return;
+  }
+
+  if (
+    !(isDataChannelOpen && isRemotePublicKeyExists && remote_hash_str != "")
+  ) {
+    return;
+  }
+
+  document.getElementById("myTextarea").value = "";
+  document.getElementById("sendButton").disabled = true;
+  await sendMessage(
+    text,
+    inputCtx,
+    width,
+    height,
+    dataChannel,
+    remote_hash_str
+  );
+  //.log("done here bro")
+  document.getElementById("sendButton").disabled = false;
+};
+document.getElementById("sendButton").onclick = sendSten;
 window.addEventListener("beforeunload", leaveChannel);
-
 init();
-
-setInterval(() => {
-  CameraStreamToBmpStream();
-}, 10);
