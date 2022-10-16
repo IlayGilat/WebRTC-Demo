@@ -6,31 +6,39 @@
     <title>PeerChat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" media="screen" href="lobby.css" />
-  </head>
-  <body>
-    <main id="lobby-container">
-      <div id="form-container">
-        <div id="form__container__header">
-          <p>👋 Create OR Join a Room</p>
-        </div>
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
 
-        <div id="form__content__wrapper">
-          <form id="join-form">
-            <input type="text" name="invite_link" required />
-            <input type="submit" value="Join Room" />
-          </form>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body class="bg-transparent"> 
+        <h1>Stenography Video Chat</h1>
+        <form id="join-form">
+            <input
+            placeholder="Enter Room ID"
+            type="text"
+            class="form-control bg-transparent text-white"
+            name="invite_link"
+            required
+            />
+            <div style="padding: 4px" />
+            <button class="btn btn-primary" type="submit">Submit</button>
+        </form>
         </div>
-      </div>
-    </main>
+    </div>
   </body>
 
   <script>
-    let form = document.getElementById("join-form");
+  let form = document.getElementById('join-form')
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      let inviteCode = e.target.invite_link.value;
-      window.location = `index.html?room=${inviteCode}`;
-    });
+form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    let inviteCode = e.target.invite_link.value
+    window.location = `index.html?room=${inviteCode}` 
+})
   </script>
 </html>

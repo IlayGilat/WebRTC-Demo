@@ -5,6 +5,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi"
+      crossorigin="anonymous"
+    />
     <title>PeerChat</title>
   </head>
   <body>
@@ -15,22 +21,30 @@
       <video class="video-player" id="sten-remote" autoplay playsinline></video>
     </div>
     <div style="margin: 20px">
-      <label>Convo:</label><br>
-      <textarea id="callTextarea" style="width:300px;height:150px;" disabled></textarea>
+      <label>Convo:</label><br />
+      <textarea
+        id="callTextarea"
+        style="width: 300px; height: 150px"
+        disabled
+      ></textarea>
     </div>
     <div style="margin: 20px">
-      <label>Write here:</label><br>
-      <textarea id="myTextarea" ></textarea>
-      <button id="sendButton" >Send</button>
+      <label>Write here:</label><br />
+      <textarea id="myTextarea"></textarea>
+      <button id="sendButton">Send</button>
     </div>
   </body>
   <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.js" integrity="sha512-NQVmLzNy4Lr5QTrmXvq/WzTMUnRHmv7nyIT/M6LyGPBS+TIeRxZ+YQaqWxjpRpvRMQSuYPQURZz/+pLi81xXeA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>-->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="agora-rtm-sdk-1.5.1.js" ></script>
-  <script type="module" src="./hash_handler.js" ></script>
-  <script type="module" src="./sten.js" ></script>
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"
+    integrity="sha512-E8QSvWZ0eCLGk4km3hxSsNmGWbLtSCSUcewDQPQWZF6pEU8GlT8a5fF32wOl1i8ftdMhssTrF/OhyGWwonTcXA=="
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  ></script>
+  <script src="agora-rtm-sdk-1.5.1.js"></script>
+  <script type="module" src="./hash_handler.js"></script>
+  <script type="module" src="./sten.js"></script>
   <script type="module" src="./rsa_handler.js"></script>
-  <script type="module" src="./main_handler.js" ></script>
-  <script type="module" src="./main.js" ></script>
-  
+  <script type="module" src="./main_handler.js"></script>
+  <script type="module" src="./main.js"></script>
 </html>

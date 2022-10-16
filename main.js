@@ -1,28 +1,46 @@
-import {sleep,makeid,str2frame,sendFrame,sendMessage} from './main_handler.js'
-import {encode as encode_arr, insertflag, decode as decode_arr,next_signed,next,distance} from './sten.js' 
-import {generateRsaPair,exportCryptoKey,importCryptoKey,rsa_encrypt,rsa_decrypt} from './rsa_handler.js'
+import {
+  sleep,
+  makeid,
+  str2frame,
+  sendFrame,
+  sendMessage,
+} from "./main_handler.js";
+import {
+  encode as encode_arr,
+  insertflag,
+  decode as decode_arr,
+  next_signed,
+  next,
+  distance,
+} from "./sten.js";
+import {
+  generateRsaPair,
+  exportCryptoKey,
+  importCryptoKey,
+  rsa_encrypt,
+  rsa_decrypt,
+} from "./rsa_handler.js";
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
 
-let remote_track
+let remote_track;
 
 //test
 
-let current_hash_str = ""
-let remote_hash_str = ""
-
+let current_hash_str = "";
+let remote_hash_str = "";
 
 let isRemotePublicKeyExists = false;
-let remote_public_key
+let remote_public_key;
 const rsa_pair = await generateRsaPair();
 
-let receivingM = ""
-let receivingStr = ""
-let isReceivingFrame = false
-let ascii_buffer = 10000
-let m_text = ""
-let temp_text = ""
-let sender_obj
+let receivingM = "";
+let receivingStr = "";
+let isReceivingFrame = false;
+let ascii_buffer = 10000;
+let m_text = "";
+let temp_text = "";
+let sender_obj;
 let dataChannel;
 let isDataChannelOpen = false;
 const width = 300;
@@ -33,7 +51,6 @@ const canvas2 = document.createElement("canvas");
 let inputCtx = canvas1.getContext("2d");
 let outputCtx = canvas2.getContext("2d");
 
-
 let token = null;
 let uid = String(Math.floor(Math.random() * 10000));
 
@@ -42,8 +59,7 @@ let channel;
 
 let queryString = window.location.search;
 let urlParams = new URLSearchParams(queryString);
-let roomID = "123"//urlParams.get("room");
-
+let roomID = urlParams.get("room"); //urlParams.get("room");
 if (!roomID) {
   window.location = "lobby.html";
 }
@@ -83,9 +99,7 @@ let init = async () => {
   document.getElementById("user-1").onclick = grabFrame;
 
   /*document.getElementById("edited-stream").srcObject = canvas2.captureStream();*/
-  stenStream = localStream//canvas2.captureStream();
-
-
+  stenStream = localStream; //canvas2.captureStream();
 };
 
 let handleUserLeft = (MemberId) => {
@@ -134,10 +148,8 @@ let handleUserJoined = async (MemberId) => {
   createOffer(MemberId);
 };
 
-
 let createPeerConnection = async (MemberId) => {
   peerConnection = new RTCPeerConnection(servers);
-  
 
   remoteStream = new MediaStream();
   document.getElementById("user-2").srcObject = remoteStream;
@@ -187,21 +199,20 @@ let createPeerConnection = async (MemberId) => {
 
   dataChannel.onerror = (error) => {
     console.log("Data Channel Error:", error);
-    isDataChannelOpen = false
-  }
+    isDataChannelOpen = false;
+  };
 
   dataChannel.onmessage = (event) => {
-    onmessageHandler(event)
-
-  }
+    onmessageHandler(event);
+  };
   dataChannel.onopen = async () => {
     dataChannel.send(await exportCryptoKey(rsa_pair.publicKey));
     isDataChannelOpen = true;
-  }
+  };
   dataChannel.onclose = () => {
     console.log("The Data Channel is Closed");
     isDataChannelOpen - false;
-  }
+  };
 };
 
 let createOffer = async (MemberId) => {
@@ -215,21 +226,20 @@ let createOffer = async (MemberId) => {
   //second user (reciever)
   peerConnection.ondatachannel = async (event) => {
     dataChannel = event.channel;
-    dataChannel.onmessage = event => {
-      onmessageHandler(event)
+    dataChannel.onmessage = (event) => {
+      onmessageHandler(event);
     };
     dataChannel.onclose = () => {
       console.log("The Data Channel is Closed");
       isDataChannelOpen = false;
-    }
+    };
     dataChannel.onerror = (error) => {
       console.log("Data Channel Error:", error);
       isDataChannelOpen = false;
-    }
+    };
     isDataChannelOpen = true;
     dataChannel.send(await exportCryptoKey(rsa_pair.publicKey));
-  }
-  
+  };
 };
 
 let createAnswer = async (MemberId, offer) => {
@@ -252,103 +262,107 @@ let addAnswer = async (answer) => {
   }
 };
 
-
 let beforeFirstTime = true;
 let onmessageHandler = async (event) => {
-
-  switch(event.data){
+  switch (event.data) {
     case "start-frame":
       isReceivingFrame = true;
       break;
     case "end-frame":
-      if(beforeFirstTime){
-        document.getElementById("sten-remote").srcObject = canvas3.captureStream()
-        beforeFirstTime=false;
+      if (beforeFirstTime) {
+        document.getElementById("sten-remote").srcObject =
+          canvas3.captureStream();
+        beforeFirstTime = false;
       }
-  
+
       isReceivingFrame = false;
-      let frameData =  str2frame(receivingStr,width,height);
-      let arr = frameData.data
-      let return_obj = decode_arr(arr,current_hash_str);
-      if(return_obj == "-1"){
-        console.log("return_obj error")
-        return -1
+      let frameData = str2frame(receivingStr, width, height);
+      let arr = frameData.data;
+      let return_obj = decode_arr(arr, current_hash_str);
+      if (return_obj == "-1") {
+        console.log("return_obj error");
+        return -1;
       }
-      remoteCtx.putImageData(frameData,0,0);
-      receivingM +=return_obj.str
-      receivingStr = ""
+      remoteCtx.putImageData(frameData, 0, 0);
+      receivingM += return_obj.str;
+      receivingStr = "";
       break;
     case "end-message":
-      //console.log("final message:",receivingM) 
-
-
+      //console.log("final message:",receivingM)
 
       ///here need to take the massage from recieveingM before its gone
-      let convoTextarea = document.getElementById("callTextarea")
-      convoTextarea.value += 'RemoteSrc:\n'+receivingM +'\n'
+      let convoTextarea = document.getElementById("callTextarea");
+      convoTextarea.value += "RemoteSrc:\n" + receivingM + "\n";
 
-
-      receivingM = ""
+      receivingM = "";
       break;
 
-
-    
     default:
       //check remote public key
-      if(/^(-----BEGIN PUBLIC KEY-----\n)/.test(event.data) && /(\n-----END PUBLIC KEY-----)$/.test(event.data)){
-        remote_public_key = await importCryptoKey(event.data)
+      if (
+        /^(-----BEGIN PUBLIC KEY-----\n)/.test(event.data) &&
+        /(\n-----END PUBLIC KEY-----)$/.test(event.data)
+      ) {
+        remote_public_key = await importCryptoKey(event.data);
         current_hash_str = makeid(16);
-        await dataChannel.send("---string---"+await rsa_encrypt(remote_public_key,current_hash_str));
+        await dataChannel.send(
+          "---string---" +
+            (await rsa_encrypt(remote_public_key, current_hash_str))
+        );
         isRemotePublicKeyExists = true;
         break;
       }
-      if(/^---string---/.test(event.data)){
-        remote_hash_str = await rsa_decrypt(rsa_pair.privateKey,event.data.substring(12,event.data.length))
+      if (/^---string---/.test(event.data)) {
+        remote_hash_str = await rsa_decrypt(
+          rsa_pair.privateKey,
+          event.data.substring(12, event.data.length)
+        );
         //console.log("remote_hash_str", remote_hash_str)
       }
 
-      if(isReceivingFrame){
+      if (isReceivingFrame) {
         receivingStr = receivingStr + event.data;
       }
       break;
   }
-} 
-
+};
 
 let leaveChannel = async () => {
   await channel.leave();
   await channel.logout();
 };
 
-
 const canvas3 = document.createElement("canvas");
 let remoteCtx = canvas3.getContext("2d");
-
 
 //obj{text, inputCtx,width,height,dataChannel,remote_hash_str}
 //this is the sender, gets text and send the text via embedded frames to the user
 
-
 let sendSten = async () => {
-
-  let text = document.getElementById("myTextarea").value
-  if(text==""){
-    return
+  let text = document.getElementById("myTextarea").value;
+  if (text == "") {
+    return;
   }
 
-  if(!(isDataChannelOpen && isRemotePublicKeyExists && remote_hash_str!="")){
-    return 
+  if (
+    !(isDataChannelOpen && isRemotePublicKeyExists && remote_hash_str != "")
+  ) {
+    return;
   }
-  
 
-  document.getElementById("myTextarea").value = ""
-  document.getElementById("sendButton").disabled = true
-  await sendMessage(text,inputCtx,width,height,dataChannel,remote_hash_str)
+  document.getElementById("myTextarea").value = "";
+  document.getElementById("sendButton").disabled = true;
+  await sendMessage(
+    text,
+    inputCtx,
+    width,
+    height,
+    dataChannel,
+    remote_hash_str
+  );
   //.log("done here bro")
-  document.getElementById("sendButton").disabled = false
-
+  document.getElementById("sendButton").disabled = false;
 };
-document.getElementById("sendButton").onclick = sendSten
+document.getElementById("sendButton").onclick = sendSten;
 window.addEventListener("beforeunload", leaveChannel);
 init();
-
