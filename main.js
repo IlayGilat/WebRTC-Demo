@@ -4,7 +4,7 @@ import {
   str2frame,
   sendFrame,
   sendMessage,
-} from "./main_handler.js";
+} from "./lib/main_handler.js";
 import {
   encode as encode_arr,
   insertflag,
@@ -12,14 +12,14 @@ import {
   next_signed,
   next,
   distance,
-} from "./sten.js";
+} from "./lib/sten.js";
 import {
   generateRsaPair,
   exportCryptoKey,
   importCryptoKey,
   rsa_encrypt,
   rsa_decrypt,
-} from "./rsa_handler.js";
+} from "./lib/rsa_handler.js";
 const APP_ID = "914f7af2b652488db4a7c6998460136a";
 const FRAME_RATE = 20;
 
@@ -60,7 +60,7 @@ let channel;
 let queryString = window.location.search;
 let urlParams = new URLSearchParams(queryString);
 let roomID = urlParams.get("room");
-
+console.log(roomID);
 document.getElementById("title").innerHTML = `Room ${roomID}`; //urlParams.get("room");
 if (!roomID) {
   window.location = "home.html";
