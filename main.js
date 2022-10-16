@@ -59,9 +59,11 @@ let channel;
 
 let queryString = window.location.search;
 let urlParams = new URLSearchParams(queryString);
-let roomID = urlParams.get("room"); //urlParams.get("room");
+let roomID = urlParams.get("room");
+
+document.getElementById("title").innerHTML = `Room ${roomID}`; //urlParams.get("room");
 if (!roomID) {
-  window.location = "lobby.html";
+  window.location = "home.html";
 }
 
 let localStream;
@@ -292,7 +294,7 @@ let onmessageHandler = async (event) => {
 
       ///here need to take the massage from recieveingM before its gone
       let convoTextarea = document.getElementById("callTextarea");
-      convoTextarea.value += "RemoteSrc:\n" + receivingM + "\n";
+      convoTextarea.value += "friend: " + receivingM + "\n";
 
       receivingM = "";
       break;

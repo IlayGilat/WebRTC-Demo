@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>PeerChat</title>
+    <title>Video Sten</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" media="screen" href="lobby.css" />
     <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
@@ -16,17 +16,18 @@
     />
   </head>
   <body class="bg-transparent"> 
-        <h1>Stenography Video Chat</h1>
-        <form id="join-form">
+        <h1 class="text-center p-4">Stenography Video Chat</h1>
+        <form id="join-form" class="d-flex flex-column align-items-center justify-content-center p-4">
             <input
             placeholder="Enter Room ID"
             type="text"
             class="form-control bg-transparent text-white"
             name="invite_link"
+            style="width: 25%;"
             required
             />
-            <div style="padding: 4px" />
-            <button class="btn btn-primary" type="submit">Submit</button>
+            
+            <button class="btn btn-primary btn-lg mt-2" type="submit">Submit</button>
         </form>
         </div>
     </div>
