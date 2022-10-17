@@ -10,7 +10,7 @@ let remote_track
 
 let current_hash_str = ""
 let remote_hash_str = ""
-
+let sender
 
 let isRemotePublicKeyExists = false;
 let remote_public_key
@@ -86,10 +86,18 @@ let init = async () => {
 };
 
 let handleUserLeft = (MemberId) => {
+  if(peerConnection && sender){
+    peerConnection.removeTrack(sender)
+  }
+  //peerConnection = null
   //Handle When User left
 };
 
 let handleMessageFromPeer = async (message, MemberId) => {
+
+  if(!peerConnection){
+    peerConnection = new RTCPeerConnection(servers);
+  }
   message = JSON.parse(message.text);
   if (message.type === "offer") {
     createAnswer(MemberId, message.offer);
@@ -98,6 +106,7 @@ let handleMessageFromPeer = async (message, MemberId) => {
     addAnswer(message.answer);
   }
   if (message.type === "candidate") {
+    //console.log("aaa")
     if (peerConnection) {
       peerConnection.addIceCandidate(message.candidate);
     }
@@ -110,8 +119,9 @@ let handleUserJoined = async (MemberId) => {
 
 
 let createPeerConnection = async (MemberId) => {
+  if(!peerConnection){
   peerConnection = new RTCPeerConnection(servers);
-  
+  }
 
   remoteStream = new MediaStream();
   document.getElementById("user-2").srcObject = remoteStream;
@@ -125,8 +135,9 @@ let createPeerConnection = async (MemberId) => {
     document.getElementById("user-1").srcObject = localStream;
   }
 
+  //console.log(peerConnection.)
   stenStream.getTracks().forEach((track) => {
-    peerConnection.addTrack(track, stenStream);
+    sender = peerConnection.addTrack(track, stenStream);
   });
 
   peerConnection.ontrack = (event) => {
