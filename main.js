@@ -29,6 +29,8 @@ let remote_track;
 
 let current_hash_str = "";
 let remote_hash_str = "";
+let start = true;
+let iceCandidates = []
 
 let isRemotePublicKeyExists = false;
 let remote_public_key;
@@ -105,6 +107,7 @@ let init = async () => {
 };
 
 let handleUserLeft = (MemberId) => {
+  iceCandidates = []
   //Handle When User left
 };
 let grabFrame = () => {
@@ -132,6 +135,7 @@ let grabFrame = () => {
   });
 };
 let handleMessageFromPeer = async (message, MemberId) => {
+
   message = JSON.parse(message.text);
   if (message.type === "offer") {
     createAnswer(MemberId, message.offer);
@@ -143,15 +147,22 @@ let handleMessageFromPeer = async (message, MemberId) => {
     if (peerConnection) {
       peerConnection.addIceCandidate(message.candidate);
     }
+    else{
+      iceCandidates.push(message.candidate);
+    }
   }
 };
 let handleUserJoined = async (MemberId) => {
+  start = false;
   console.log("A new user joined the channel: ", MemberId);
   createOffer(MemberId);
 };
 
 let createPeerConnection = async (MemberId) => {
   peerConnection = new RTCPeerConnection(servers);
+  iceCandidates.forEach(candidate => {peerConnection.addIceCandidate(candidate);})
+  iceCandidates = []
+
 
   remoteStream = new MediaStream();
   document.getElementById("user-2").srcObject = remoteStream;
@@ -197,7 +208,7 @@ let createPeerConnection = async (MemberId) => {
   */
 
   //create data channel (initiator)
-  dataChannel = peerConnection.createDataChannel("sten");
+  dataChannel = peerConnection.createDataChannel("maintaining");
 
   dataChannel.onerror = (error) => {
     console.log("Data Channel Error:", error);
@@ -306,7 +317,7 @@ let onmessageHandler = async (event) => {
         /(\n-----END PUBLIC KEY-----)$/.test(event.data)
       ) {
         remote_public_key = await importCryptoKey(event.data);
-        current_hash_str = makeid(16);
+        current_hash_str = makeid(32);
         await dataChannel.send(
           "---string---" +
             (await rsa_encrypt(remote_public_key, current_hash_str))
